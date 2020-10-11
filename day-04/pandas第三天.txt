@@ -1,0 +1,150 @@
+import numpy as np
+import pandas as pd
+from pandas import Series, DataFrame
+
+# 删除重复数据
+# 创建日志表
+# 列： 日志编号，日志等级，日志名称，日志消息
+# 行： 日志的日期： 2018-10-10
+logs = DataFrame({
+	'ID': np.arange(1, 11),
+	'LevelName': np.random.choice(['INFO', 'ERROR', 
+								   'WARNING', 'CRITICAL'], size=10),
+	'Name': np.random.choice(['django', 'flask', 'scrapy'], size=10),
+	'Message': np.random.choice(['登录', '下订单', '支付', '积分',
+                                 '秒杀', '验证码'], size=10)
+}, index=['2019-04-%s' % str(day).rjust(2, '0') for day in range(1, 11)])
+
+# 重复最后一行
+logs.loc['2019-04-11'] = logs.loc['2019-04-10']
+
+# 查找重复行数据
+# keep = {'first', 'last'}
+# keep='last'表示保留最后一个重复数据，first表示保留第一个
+logs.duplicated(keep='last')  # 返回bool
+
+# 获取行值为True的行数据
+logs.loc[logs.duplicated(keep='last')]
+
+# 删除重复行数据(获取重复行的索引，按索引值删除)
+logs.drop(logs.loc[logs.duplicated(keep='last')].index, axis=0)
+
+# 快速删除重复行数据
+# inplace=True 在原有的数据上进行修改， 如果=False，表示返回修改后的副本
+logs.drop_duplicates(keep='first', inplace=True)
+
+# 部分删除操作
+logs.drop(index='2019-04-05', columns='LevelName')
+logs.drop(index=['2019-04-05', '2019-04-08'],
+		  columns=['LevelName', 'ID'])
+logs.drop(index=['2019-04-05', '2019-04-08'])
+logs.drop(columns=['LevelName', 'ID'])
+logs.drop(['ID', 'LevelName'], axis=1)
+logs.drop(['2019-04-05', '2019-04-08'], axis=0)
+
+# 映射操作
+	replace(old, new) 将old数据替换为new数据
+	map() 根据指定的列映射出相应的数据，如根据成绩，列出等级
+	rename() 重命名
+
+# 将数据中所有ERROR修改成'错误'，INFO改成'正常'
+logs.replace(to_replace='ERROR', value='错误')
+logs.replace({
+	'ERROR': '错误',
+	'INFO': '正常'
+})
+logs.replace(['ERROR', 'INFO'], ['错误', '正常'])
+
+# 创建新的一列version列，根据Name字段，指定不同列值映射不同的版本，详情如下：
+# scrapy -> 1.1
+# django -> 2.0
+# flask -> 1.2
+# 要求使用map函数
+# 获取Name列值的Series
+# 在通过Series对象的map()函数，将每一行对应的数值映射成对应的值
+logs['version'] = logs['Name'].map({
+	'scrapy': 1.1,
+	'django': 2.0,
+	'flask': 1.2
+})
+
+# 将行索引转成一列，列名为Date
+# drop=True，表示重新生成行索引标签
+logs_2 = logs.reset_index().rename(columns={'index': 'Date'})
+
+logs_2['Date'].dtype # 查看Date的类型
+logs_2.dtypes  # 查看所有列的类型
+
+# 修改version的数据类型float64为string类型
+# map()中指定类型转换的函数，将version的每一行的数据经过转换函数转成指定的类型
+logs_2['version'] = logs_2['version'].map(str)
+
+# 修改Date列的类型string为datetime
+from datetime import datetime
+def convert_dt(item):
+	# item是每行的数值，类型是str
+	# item： 2019-04-01
+	return datetime.strptime(item, '%Y-%m-%d')
+logs_2['Date'] = logs_2['Date'].map(convert_dt)
+
+# 将Date列的数据转成 月和日 的字符串
+logs_2['Date'] = logs_2('Date').map(lambda item: item.strftime('%m-%d'))
+
+# 创建5位同学的三门课程的成绩表
+# 5位同学的姓名分别是A, B, C, D, E
+# 3门课程分别是Python，Java，H5
+scores = DataFrame(np.random.randint(40, 100, size=(5, 3)),
+				   index=['A', 'B', 'C', 'D', 'E'],
+				   columns=['Python', 'Java', 'H5'])
+
+# 增加一个level列，根据python列值，生成不同的等级，详情如下
+# >=90            -> A
+# < 90 and  >= 75 -> B
+# < 75 and >=60   -> C
+# < 60            -> D
+logs_2['level'] = logs_2['Python'].map(lambda item: 'A' if item >= 90 
+									           else 'B' if item >= 75
+											   else 'C' if item >= 60
+											   else 'D')
+
+# 删除level列
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
